@@ -216,14 +216,11 @@
         .fc .fc-day-today { background-color: #fff3cd !important; }
         .fc .fc-holiday { background-color: #fce4ec !important; }
 
-        /* ツールバー：今日・ビュー切替非表示 */
         .fc .fc-toolbar .fc-button-group:not(.fc-prev-button):not(.fc-next-button),
         .fc .fc-today-button { display: none !important; }
 
-        /* タイトル1行強制 */
         .fc .fc-toolbar-title { white-space: nowrap !important; font-size: 1em !important; }
 
-        /* ナビボタン */
         .fc .fc-prev-button, .fc .fc-next-button {
             background: #667eea !important;
             border: none !important;
@@ -232,7 +229,6 @@
             font-size: 0.85em !important;
         }
 
-        /* セル高さ固定 */
         .fc .fc-daygrid-day-frame {
             min-height: 70px !important;
             max-height: 70px !important;
@@ -240,7 +236,6 @@
             position: relative !important;
         }
 
-        /* 日付番号を右上に配置 */
         .fc .fc-daygrid-day-top {
             position: relative !important;
             height: 100% !important;
@@ -257,7 +252,6 @@
             line-height: 1 !important;
         }
 
-        /* 祝日名を左下に配置（日付と被らない位置） */
         .fc-holiday-name {
             position: absolute !important;
             bottom: 2px !important;
@@ -273,7 +267,6 @@
             pointer-events: none !important;
         }
 
-        /* イベント領域を中央に配置 */
         .fc .fc-daygrid-day-events {
             position: absolute !important;
             top: 18px !important;
@@ -292,13 +285,12 @@
             line-height: 1.2 !important;
         }
 
-        /* ===== ボトムナビ（押しやすい位置に調整） ===== */
+        /* ===== ボトムナビ ===== */
         .bottom-nav {
             display: flex;
             background: white;
             border-top: 1px solid #e9ecef;
             flex-shrink: 0;
-            /* safe-areaの上に余白を追加して押しやすくする */
             padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
             padding-top: 6px;
         }
@@ -316,7 +308,6 @@
             flex-direction: column;
             align-items: center;
             gap: 2px;
-            /* タップ領域を拡大 */
             min-height: 52px;
             justify-content: center;
         }
@@ -385,10 +376,15 @@
         .form-group { margin-bottom: 14px; width: 100%; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #495057; font-size: 0.85em; }
 
+        /* ============================================
+           フォーム入力欄 — 高さ統一修正
+           ============================================ */
         .form-control {
             display: block;
             width: 100%;
-            padding: 12px 14px;
+            /* 明示的に高さを固定して、未入力時・入力後で差が出ないようにする */
+            height: 46px;
+            padding: 0 14px;
             border: 1.5px solid #dee2e6;
             border-radius: 10px;
             font-size: 16px;
@@ -399,19 +395,37 @@
             appearance: none;
             outline: none;
             transition: border-color 0.2s, background 0.2s;
+            /* 垂直中央揃えを強制 */
+            line-height: 44px;
         }
 
-        .form-control:focus { border-color: #667eea; background: white; }
+        .form-control:focus {
+            border-color: #667eea;
+            background: white;
+        }
 
+        /* select は line-height で上下中央が効かないので padding で調整 */
         select.form-control {
+            line-height: normal;
+            padding: 12px 36px 12px 14px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 14px center;
-            padding-right: 36px;
         }
 
+        /* date / time input の iOS 独自レンダリングを上書き */
         input[type="date"].form-control,
-        input[type="time"].form-control { -webkit-appearance: none; }
+        input[type="time"].form-control {
+            -webkit-appearance: none;
+            /* iOS で未入力時に小さくなるのを防ぐため min-height も併記 */
+            min-height: 46px;
+            line-height: 44px;
+        }
+
+        /* プレースホルダーの位置も統一 */
+        .form-control::placeholder {
+            line-height: 44px;
+        }
 
         .form-row { display: flex; gap: 10px; width: 100%; }
         .form-row .form-group { flex: 1; min-width: 0; }
