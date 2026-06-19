@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク管理アプリ</title>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 40px);
+        }
+
+        /* ===== ヘッダー ===== */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        /* ===== 画面共通 ===== */
+        .screen {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== ホーム画面 ===== */
+        .home-content {
+            padding: 25px 30px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-item strong {
+            font-size: 2em;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .stat-item span {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .stat-item.pending {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+        }
+
+        .stat-item.completed {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .stat-item.total {
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+        }
+
+        .home-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .home-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .today-task-item {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .today-task-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .today-task-item.overdue {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .today-task-item.tomorrow {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+
+        .today-task-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .today-task-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+            font-size: 0.95em;
+        }
+
+        /* ===== リスト画面 ===== */
+        .list-controls {
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .filter-btn {
+            background: white;
+            color: #495057;
+            border: 2px solid #dee2e6;
+            padding: 7px 14px;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .list-content {
+            padding: 25px 30px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .task-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .task-item.overdue {
+            border-color: #dc3545;
+            border-width: 3px;
+            background: #fff5f5;
+        }
+
+        .task-item.tomorrow {
+            border-color: #ffc107;
+            border-width: 3px;
+            background: #fffbf0;
+        }
+
+        .task-checkbox {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #667eea;
+            flex-shrink: 0;
+        }
+
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-title {
+            font-size: 1.05em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 0.85em;
+            color: #6c757d;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .priority-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .priority-high {
+            background: #dc3545;
+            color: white;
+        }
+
+        .priority-medium {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .priority-low {
+            background: #28a745;
+            color: white;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* ===== カレンダー画面 ===== */
+        .calendar-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        #calendar {
+            background: white;
+            height: 100%;
+        }
+
+        .fc .fc-day-sat {
+            background-color: #e3f2fd !important;
+        }
+
+        .fc .fc-day-sun {
+            background-color: #fce4ec !important;
+        }
+
+        .fc .fc-day-today {
+            background-color: #fff3cd !important;
+        }
+
+        .fc .fc-holiday {
+            background-color: #fce4ec !important;
+        }
+
+        .fc-holiday-name {
+            font-size: 0.7em;
+            color: #e91e63;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        /* ===== ボトムナビ ===== */
+        .bottom-nav {
+            display: flex;
+            background: white;
+            border-top: 2px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-btn .nav-icon {
+            font-size: 1.4em;
+        }
+
+        .nav-btn.active {
+            color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .nav-btn:hover:not(.active) {
+            background: #f8f9fa;
+        }
+
+        /* ===== モーダル ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-header .date-badge {
+            font-size: 0.6em;
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            line-height: 1;
+        }
+
+        /* ===== フォーム（横幅統一） ===== */
+        .form-group {
+            margin-bottom: 18px;
+            width: 100%;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            display: block;
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        /* ===== 日別タスク一覧モーダル ===== */
+        .day-task-list {
+            margin-bottom: 15px;
+        }
+
+        .day-task-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .day-task-item:hover {
+            background: #f0f3ff;
+            border-color: #667eea;
+            transform: translateX(3px);
+        }
+
+        .day-task-item.overdue {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .day-task-item.completed {
+            opacity: 0.7;
+        }
+
+        .day-task-item.completed .day-task-title {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .day-task-time {
+            font-size: 0.95em;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 55px;
+            flex-shrink: 0;
+        }
+
+        .day-task-title {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+            word-break: break-word;
+        }
+
+        .day-task-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .day-task-empty .empty-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        .day-task-footer {
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                border-radius: 0;
+                max-height: 100vh;
+                height: 100vh;
+            }
+
+            .header {
+                padding: 15px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.2em;
+            }
+
+            .home-content, .list-content {
+                padding: 20px;
+            }
+
+            .list-controls {
+                padding: 12px 20px;
+            }
+
+            .calendar-content {
+                padding: 10px;
+            }
+
+            .stats {
+                gap: 10px;
+            }
+
+            .stat-item {
+                padding: 15px 10px;
+            }
+
+            .stat-item strong {
+                font-size: 1.5em;
+            }
+
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .task-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="screenTitle">📋 タスク管理</h1>
+        </div>
+
+        <!-- ===== ホーム画面 ===== -->
+        <div class="screen active" id="homeScreen">
+            <div class="home-content">
+                <div class="stats">
+                    <div class="stat-item pending">
+                        <strong id="pendingCount">0</strong>
+                        <span>未完了</span>
+                    </div>
+                    <div class="stat-item completed">
+                        <strong id="completedCount">0</strong>
+                        <span>完了</span>
+                    </div>
+                    <div class="stat-item total">
+                        <strong id="totalCount">0</strong>
+                        <span>合計</span>
+                    </div>
+                </div>
+
+                <div class="home-section">
+                    <h3>📅 今日のタスク</h3>
+                    <div id="todayTasksList"></div>
+                </div>
+
+                <div class="home-section">
+                    <h3>⚠️ 期限切れ・明日までのタスク</h3>
+                    <div id="urgentTasksList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== リスト画面 ===== -->
+        <div class="screen" id="listScreen">
+            <div class="list-controls">
+                <button class="btn btn-primary" onclick="openAddModal()">+ 追加</button>
+                <button class="btn filter-btn active" data-filter="all" onclick="setFilter('all')">すべて</button>
+                <button class="btn filter-btn" data-filter="pending" onclick="setFilter('pending')">未完了</button>
+                <button class="btn filter-btn" data-filter="completed" onclick="setFilter('completed')">完了</button>
+            </div>
+            <div class="list-content">
+                <div id="taskList"></div>
+            </div>
+        </div>
+
+        <!-- ===== カレンダー画面 ===== -->
+        <div class="screen" id="calendarScreen">
+            <div class="calendar-content">
+                <div id="calendar"></div>
+            </div>
+        </div>
+
+        <!-- ===== ボトムナビ ===== -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-screen="home" onclick="switchScreen('home')">
+                <span class="nav-icon">🏠</span>
+                <span>ホーム</span>
+            </button>
+            <button class="nav-btn" data-screen="list" onclick="switchScreen('list')">
+                <span class="nav-icon">📝</span>
+                <span>リスト</span>
+            </button>
+            <button class="nav-btn" data-screen="calendar" onclick="switchScreen('calendar')">
+                <span class="nav-icon">📅</span>
+                <span>カレンダー</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ===== タスク追加/編集モーダル ===== -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modalTitle">タスク追加</span>
+                <button class="modal-close-btn" onclick="closeModal('taskModal')">&times;</button>
+            </div>
+            <form id="taskForm">
+                <input type="hidden" id="taskId">
+                <div class="form-group">
+                    <label>タスク名 *</label>
+                    <input type="text" id="taskTitle" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>期限日</label>
+                        <input type="date" id="taskDueDate">
+                    </div>
+                    <div class="form-group">
+                        <label>期限時間</label>
+                        <input type="time" id="taskDueTime">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>優先度</label>
+                    <select id="taskPriority">
+                        <option value="low">低</option>
+                        <option value="medium" selected>中</option>
+                        <option value="high">高</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('taskModal')">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== 日別タスク一覧モーダル ===== -->
+    <div class="modal" id="dayTasksModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="dayTasksTitle">📅 タスク一覧</span>
+                <button class="modal-close-btn" onclick="closeModal('dayTasksModal')">&times;</button>
+            </div>
+            <div id="dayTasksDate" style="color: #6c757d; margin-bottom: 15px; font-size: 0.95em;"></div>
+            <div class="day-task-list" id="dayTasksList"></div>
+            <div class="day-task-footer">
+                <button class="btn btn-primary" onclick="addTaskForDay()">+ この日にタスクを追加</button>
+            </div>
+        </div>
+    </div>
+
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/ja.global.min.js'></script>
+    <script>
+        let tasks = [];
+        let currentFilter = 'all';
+        let currentScreen = 'home';
+        let selectedDayDate = null; // 日別モーダルで選択中の日付
+        let calendar;
+
+        // ===== 日本祝日計算 =====
+        function getJapaneseHolidays(year) {
+            const holidays = {};
+            holidays[`${year}-01-01`] = '元日';
+            
+            const janSecond = new Date(year, 0, 1);
+            while (janSecond.getDay() !== 1) janSecond.setDate(janSecond.getDate() + 1);
+            janSecond.setDate(janSecond.getDate() + 7);
+            holidays[formatDate(janSecond)] = '成人の日';
+            
+            holidays[`${year}-02-11`] = '建国記念の日';
+            holidays[`${year}-02-23`] = '天皇誕生日';
+            
+            const vernal = Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+            holidays[`${year}-03-${String(vernal).padStart(2, '0')}`] = '春分の日';
+            
+            holidays[`${year}-04-29`] = '昭和の日';
+            holidays[`${year}-05-03`] = '憲法記念日';
+            holidays[`${year}-05-04`] = 'みどりの日';
+            holidays[`${year}-05-05`] = 'こどもの日';
+            
+            const julThird = new Date(year, 6, 1);
+            while (julThird.getDay() !== 1) julThird.setDate(julThird.getDate() + 1);
+            julThird.setDate(julThird.getDate() + 14);
+            holidays[formatDate(julThird)] = '海の日';
+            
+            holidays[`${year}-08-11`] = '山の日';
+            
+            const sepThird = new Date(year, 8, 1);
+            while (sepThird.getDay() !== 1) sepThird.setDate(sepThird.getDate() + 1);
+            sepThird.setDate(sepThird.getDate() + 14);
+            holidays[formatDate(sepThird)] = '敬老の日';
+            
+            const autumn = Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+            holidays[`${year}-09-${String(autumn).padStart(2, '0')}`] = '秋分の日';
+            
+            const octSecond = new Date(year, 9, 1);
+            while (octSecond.getDay() !== 1) octSecond.setDate(octSecond.getDate() + 1);
+            octSecond.setDate(octSecond.getDate() + 7);
+            holidays[formatDate(octSecond)] = 'スポーツの日';
+            
+            holidays[`${year}-11-03`] = '文化の日';
+            holidays[`${year}-11-23`] = '勤労感謝の日';
+            
+            return holidays;
+        }
+
+        const allHolidaysCache = {};
+        function getAllHolidays() {
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear - 1; y <= currentYear + 2; y++) {
+                if (!allHolidaysCache[y]) {
+                    Object.assign(allHolidaysCache, getJapaneseHolidays(y));
+                }
+            }
+            return allHolidaysCache;
+        }
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDateJP(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('ja-JP', {
+                year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+            });
+        }
+
+        // ===== LocalStorage =====
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            const saved = localStorage.getItem('tasks');
+            if (saved) {
+                tasks = JSON.parse(saved);
+            }
+        }
+
+        // ===== タスク管理 =====
+        function addTask(task) {
+            task.id = Date.now();
+            task.completed = false;
+            task.createdAt = new Date().toISOString();
+            tasks.push(task);
+            saveTasks();
+            refreshAll();
+        }
+
+        function updateTask(id, updates) {
+            const index = tasks.findIndex(t => t.id === id);
+            if (index !== -1) {
+                tasks[index] = { ...tasks[index], ...updates };
+                saveTasks();
+                refreshAll();
+            }
+        }
+
+        function deleteTask(id) {
+            if (confirm('このタスクを削除しますか？')) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+                refreshAll();
+                // 日別モーダルが開いていれば再描画
+                if (selectedDayDate && document.getElementById('dayTasksModal').classList.contains('active')) {
+                    renderDayTasks(selectedDayDate);
+                }
+            }
+        }
+
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+                refreshAll();
+                if (selectedDayDate && document.getElementById('dayTasksModal').classList.contains('active')) {
+                    renderDayTasks(selectedDayDate);
+                }
+            }
+        }
+
+        function refreshAll() {
+            renderTasks();
+            renderHome();
+            updateStats();
+            updateCalendar();
+        }
+
+        // ===== 画面切り替え =====
+        function switchScreen(screen) {
+            currentScreen = screen;
+            
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`${screen}Screen`).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.screen === screen);
+            });
+
+            const titles = {
+                home: '📋 タスク管理',
+                list: '📝 タスクリスト',
+                calendar: '📅 カレンダー'
+            };
+            document.getElementById('screenTitle').textContent = titles[screen];
+
+            if (screen === 'calendar' && calendar) {
+                setTimeout(() => calendar.updateSize(), 50);
+            }
+        }
+
+        // ===== ホーム画面 =====
+        function renderHome() {
+            const today = formatDate(new Date());
+            const todayTasks = tasks
+                .filter(t => t.dueDate === today && !t.completed)
+                .sort((a, b) => (a.dueTime || '99:99').localeCompare(b.dueTime || '99:99'));
+
+            const todayList = document.getElementById('todayTasksList');
+            if (todayTasks.length > 0) {
+                todayList.innerHTML = todayTasks.map(task => renderTodayTaskItem(task)).join('');
+            } else {
+                todayList.innerHTML = '<div class="empty-message">🎉 今日のタスクはありません</div>';
+            }
+
+            // 期限切れ・明日までのタスク
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const urgentTasks = tasks.filter(t => {
+                if (t.completed || !t.dueDate) return false;
+                const due = new Date(t.dueDate);
+                due.setHours(0, 0, 0, 0);
+                return due <= tomorrow;
+            }).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            const urgentList = document.getElementById('urgentTasksList');
+            if (urgentTasks.length > 0) {
+                urgentList.innerHTML = urgentTasks.map(task => renderTodayTaskItem(task)).join('');
+            } else {
+                urgentList.innerHTML = '<div class="empty-message">✅ 緊急のタスクはありません</div>';
+            }
+        }
+
+        function renderTodayTaskItem(task) {
+            const today = formatDate(new Date());
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = formatDate(tomorrow);
+
+            let className = 'today-task-item';
+            if (task.dueDate === today) {
+                // 今日
+            } else if (task.dueDate < today) {
+                className += ' overdue';
+            } else if (task.dueDate === tomorrowStr) {
+                className += ' tomorrow';
+            }
+
+            const timeText = task.dueTime ? `⏰ ${task.dueTime}` : '終日';
+            const priorityText = { low: '低', medium: '中', high: '高' }[task.priority];
+            const dateText = task.dueDate === today ? '今日' :
+                             task.dueDate === tomorrowStr ? '明日' :
+                             formatDateJP(task.dueDate);
+
+            return `
+                <div class="${className}">
+                    <div>
+                        <div class="today-task-title">${escapeHtml(task.title)}</div>
+                        <div style="font-size: 0.85em; color: #6c757d; margin-top: 3px;">
+                            ${dateText} ・ ${timeText}
+                        </div>
+                    </div>
+                    <div class="today-task-info">
+                        <span class="priority-badge priority-${task.priority}">${priorityText}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===== リスト画面 =====
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            let filteredTasks = tasks;
+
+            if (currentFilter === 'pending') {
+                filteredTasks = tasks.filter(t => !t.completed);
+            } else if (currentFilter === 'completed') {
+                filteredTasks = tasks.filter(t => t.completed);
+            }
+
+            filteredTasks.sort((a, b) => {
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                const dateA = new Date(a.dueDate + 'T' + (a.dueTime || '23:59'));
+                const dateB = new Date(b.dueDate + 'T' + (b.dueTime || '23:59'));
+                return dateA - dateB;
+            });
+
+            if (filteredTasks.length === 0) {
+                taskList.innerHTML = '<p class="empty-message">タスクがありません</p>';
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            taskList.innerHTML = filteredTasks.map(task => {
+                let className = 'task-item';
+                if (task.completed) className += ' completed';
+                
+                if (task.dueDate && !task.completed) {
+                    const dueDate = new Date(task.dueDate);
+                    dueDate.setHours(0, 0, 0, 0);
+                    
+                    if (dueDate < today) {
+                        className += ' overdue';
+                    } else if (dueDate.getTime() === tomorrow.getTime()) {
+                        className += ' tomorrow';
+                    }
+                }
+
+                const priorityText = { low: '低', medium: '中', high: '高' }[task.priority];
+                const dueDateText = formatDateTimeDisplay(task.dueDate, task.dueTime);
+
+                return `
+                    <div class="${className}">
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                        <div class="task-content">
+                            <div class="task-title">${escapeHtml(task.title)}</div>
+                            <div class="task-meta">
+                                <span class="priority-badge priority-${task.priority}">${priorityText}</span>
+                                <span>📅 ${dueDateText}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-secondary" onclick="openEditModal(${task.id})">編集</button>
+                            <button class="btn btn-danger" onclick="deleteTask(${task.id})">削除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatDateTimeDisplay(dueDate, dueTime) {
+            if (!dueDate) return '期限なし';
+            const dateStr = formatDateJP(dueDate);
+            if (dueTime) {
+                return `${dateStr} ${dueTime}`;
+            }
+            return dateStr;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateStats() {
+            const pending = tasks.filter(t => !t.completed).length;
+            const completed = tasks.filter(t => t.completed).length;
+            
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('totalCount').textContent = tasks.length;
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            renderTasks();
+        }
+
+        // ===== モーダル操作 =====
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function openAddModal(dueDate = null, dueTime = null) {
+            document.getElementById('modalTitle').textContent = 'タスク追加';
+            document.getElementById('taskId').value = '';
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDueDate').value = dueDate || '';
+            document.getElementById('taskDueTime').value = dueTime || '';
+            document.getElementById('taskPriority').value = 'medium';
+            openModal('taskModal');
+            setTimeout(() => document.getElementById('taskTitle').focus(), 100);
+        }
+
+        function openEditModal(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                document.getElementById('modalTitle').textContent = 'タスク編集';
+                document.getElementById('taskId').value = task.id;
+                document.getElementById('taskTitle').value = task.title;
+                document.getElementById('taskDueDate').value = task.dueDate || '';
+                document.getElementById('taskDueTime').value = task.dueTime || '';
+                document.getElementById('taskPriority').value = task.priority;
+                openModal('taskModal');
+            }
+        }
+
+        // ===== 日別タスク一覧モーダル =====
+        function openDayTasksModal(dateStr) {
+            selectedDayDate = dateStr;
+            document.getElementById('dayTasksTitle').innerHTML = 
+                `📅 タスク一覧 <span class="date-badge">${formatDateJP(dateStr)}</span>`;
+            document.getElementById('dayTasksDate').textContent = '';
+            renderDayTasks(dateStr);
+            openModal('dayTasksModal');
+        }
+
+        function renderDayTasks(dateStr) {
+            const dayTasks = tasks
+                .filter(t => t.dueDate === dateStr)
+                .sort((a, b) => {
+                    // 未完了を先に、次に時間順
+                    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                    return (a.dueTime || '99:99').localeCompare(b.dueTime || '99:99');
+                });
+
+            const list = document.getElementById('dayTasksList');
+
+            if (dayTasks.length === 0) {
+                list.innerHTML = `
+                    <div class="day-task-empty">
+                        <div class="empty-icon">📭</div>
+                        <div>この日のタスクはありません</div>
+                        <div style="font-size: 0.9em; margin-top: 8px; color: #adb5bd;">
+                            下のボタンからタスクを追加できます
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = dayTasks.map(task => {
+                const today = formatDate(new Date());
+                let className = 'day-task-item';
+                if (task.completed) className += ' completed';
+                if (!task.completed && task.dueDate < today) className += ' overdue';
+
+                const timeText = task.dueTime || '終日';
+                const priorityText = { low: '低', medium: '中', high: '高' }[task.priority];
+
+                return `
+                    <div class="${className}" onclick="openEditModal(${task.id})">
+                        <input type="checkbox" class="task-checkbox" 
+                            ${task.completed ? 'checked' : ''} 
+                            onclick="event.stopPropagation(); toggleTask(${task.id})">
+                        <div class="day-task-time">${timeText}</div>
+                        <div class="day-task-title">${escapeHtml(task.title)}</div>
+                        <span class="priority-badge priority-${task.priority}">${priorityText}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addTaskForDay() {
+            if (!selectedDayDate) return;
+            closeModal('dayTasksModal');
+            openAddModal(selectedDayDate, null);
+        }
+
+        // ===== フォーム送信 =====
+        document.getElementById('taskForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('taskId').value;
+            const task = {
+                title: document.getElementById('taskTitle').value.trim(),
+                dueDate: document.getElementById('taskDueDate').value,
+                dueTime: document.getElementById('taskDueTime').value,
+                priority: document.getElementById('taskPriority').value
+            };
+
+            if (!task.title) return;
+
+            if (id) {
+                updateTask(parseInt(id), task);
+            } else {
+                addTask(task);
+            }
+
+            closeModal('taskModal');
+        });
+
+        // ===== カレンダー =====
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            getAllHolidays();
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'ja',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                height: '100%',
+                nowIndicator: true,
+                dayCellClassNames: function(arg) {
+                    const dateStr = formatDate(arg.date);
+                    if (allHolidaysCache[dateStr]) {
+                        return ['fc-holiday'];
+                    }
+                    return [];
+                },
+                dayCellContent: function(arg) {
+                    const dateStr = formatDate(arg.date);
+                    const holidayName = allHolidaysCache[dateStr];
+                    
+                    let html = `<span class="fc-daygrid-day-number">${arg.date.getDate()}</span>`;
+                    if (holidayName) {
+                        html += `<div class="fc-holiday-name">${holidayName}</div>`;
+                    }
+                    
+                    return { html: html };
+                },
+                events: function(info, successCallback, failureCallback) {
+                    const events = tasks
+                        .filter(task => task.dueDate)
+                        .map(task => {
+                            const start = task.dueTime 
+                                ? `${task.dueDate}T${task.dueTime}:00`
+                                : task.dueDate;
+                            
+                            return {
+                                title: task.title,
+                                start: start,
+                                allDay: !task.dueTime,
+                                backgroundColor: task.completed ? '#28a745' : 
+                                               task.priority === 'high' ? '#dc3545' :
+                                               task.priority === 'medium' ? '#ffc107' : '#667eea',
+                                borderColor: task.completed ? '#28a745' : 
+                                            task.priority === 'high' ? '#dc3545' :
+                                            task.priority === 'medium' ? '#ffc107' : '#667eea',
+                                textColor: task.priority === 'medium' ? '#000' : '#fff',
+                                extendedProps: {
+                                    taskId: task.id,
+                                    completed: task.completed
+                                }
+                            };
+                        });
+                    successCallback(events);
+                },
+                dateClick: function(info) {
+                    // 月表示：日付のみ、週/日表示：日時も取得
+                    let dateStr, timeStr = null;
+                    if (info.view.type === 'dayGridMonth') {
+                        dateStr = info.dateStr;
+                    } else {
+                        dateStr = formatDate(info.date);
+                        timeStr = String(info.date.getHours()).padStart(2, '0') + ':' + 
+                                  String(info.date.getMinutes()).padStart(2, '0');
+                    }
+                    selectedDayDate = dateStr;
+                    // まず日別一覧を開く
+                    openDayTasksModal(dateStr);
+                    // 時間が指定されている場合は、タスクがない時にその時間をプリセット
+                    if (timeStr) {
+                        // プリセット用の情報を保持
+                        window._presetTime = timeStr;
+                    }
+                },
+                eventClick: function(info) {
+                    // イベントクリック → その日の一覧を開く
+                    const dateStr = formatDate(new Date(info.event.start));
+                    openDayTasksModal(dateStr);
+                }
+            });
+
+            calendar.render();
+        }
+
+        function updateCalendar() {
+            if (calendar) {
+                calendar.refetchEvents();
+            }
+        }
+
+        // ===== 初期化 =====
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTasks();
+            renderTasks();
+            renderHome();
+            updateStats();
+            initCalendar();
+        });
+
+        // モーダル外クリックで閉じる
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+
+        // ESCキーでモーダルを閉じる
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // 日別モーダルを閉じる際にプリセット時間をクリア
+        const dayTasksModal = document.getElementById('dayTasksModal');
+        const originalClose = closeModal;
+        // addTaskForDay内でプリセット時間を使用
+        const originalAddTaskForDay = addTaskForDay;
+        window.addTaskForDay = function() {
+            if (!selectedDayDate) return;
+            const presetTime = window._presetTime;
+            closeModal('dayTasksModal');
+            openAddModal(selectedDayDate, presetTime || null);
+            window._presetTime = null;
+        };
+    </script>
+</body>
+</html>
+
