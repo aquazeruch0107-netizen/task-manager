@@ -249,15 +249,85 @@
         .calendar-content {
             padding: 10px;
             flex: 1;
-            overflow-y: auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        #calendar { background: white; height: 100%; }
+        #calendar {
+            background: white;
+            flex: 1;
+            min-height: 0;
+        }
+
         .fc .fc-day-sat { background-color: #e3f2fd !important; }
         .fc .fc-day-sun { background-color: #fce4ec !important; }
         .fc .fc-day-today { background-color: #fff3cd !important; }
         .fc .fc-holiday { background-color: #fce4ec !important; }
-        .fc-holiday-name { font-size: 0.65em; color: #e91e63; margin-top: 1px; font-weight: 600; }
+
+        /* ツールバー：今日・ビュー切替ボタンを非表示 */
+        .fc .fc-toolbar .fc-button-group:not(.fc-prev-button):not(.fc-next-button),
+        .fc .fc-today-button {
+            display: none !important;
+        }
+
+        /* タイトルを1行に強制 */
+        .fc .fc-toolbar-title {
+            white-space: nowrap !important;
+            font-size: 1.1em !important;
+        }
+
+        /* ナビゲーションボタンのスタイル調整 */
+        .fc .fc-prev-button,
+        .fc .fc-next-button {
+            background: #667eea !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 6px 12px !important;
+            font-size: 0.9em !important;
+        }
+
+        /* セルの高さを固定（祝日名で崩れないように） */
+        .fc .fc-daygrid-day-frame {
+            min-height: 80px !important;
+            max-height: 80px !important;
+            overflow: hidden !important;
+        }
+
+        .fc-holiday-name {
+            font-size: 0.6em;
+            color: #e91e63;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+        }
+
+        .fc .fc-daygrid-day-top {
+            position: relative;
+        }
+
+        .fc .fc-daygrid-day-number {
+            padding: 4px !important;
+            font-size: 0.85em !important;
+        }
+
+        /* イベントの表示調整 */
+        .fc .fc-daygrid-event {
+            font-size: 0.7em !important;
+            padding: 1px 3px !important;
+            margin: 1px 0 !important;
+            border-radius: 3px !important;
+        }
+
+        .fc .fc-daygrid-day-events {
+            max-height: 40px !important;
+            overflow: hidden !important;
+        }
 
         /* ===== ボトムナビ ===== */
         .bottom-nav {
@@ -344,9 +414,7 @@
             line-height: 1;
         }
 
-        /* ============================================
-           フォーム — iPhone対応・横幅完全統一
-           ============================================ */
+        /* フォーム */
         .modal-body {
             padding: 20px 24px 24px;
         }
@@ -370,7 +438,7 @@
             padding: 12px 14px;
             border: 1.5px solid #dee2e6;
             border-radius: 10px;
-            font-size: 16px; /* iOS zoom防止 */
+            font-size: 16px;
             font-family: inherit;
             background: #fafafa;
             color: #333;
@@ -386,7 +454,6 @@
             background: white;
         }
 
-        /* selectの矢印を統一 */
         select.form-control {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
@@ -394,7 +461,6 @@
             padding-right: 36px;
         }
 
-        /* date/time inputのアイコン位置調整 */
         input[type="date"].form-control,
         input[type="time"].form-control {
             -webkit-appearance: none;
@@ -408,7 +474,7 @@
 
         .form-row .form-group {
             flex: 1;
-            min-width: 0; /* flex子要素の縮小を許可 */
+            min-width: 0;
         }
 
         .modal-actions {
@@ -426,7 +492,7 @@
             font-size: 15px;
         }
 
-        /* ===== 日別タスク一覧モーダル ===== */
+        /* 日別タスク一覧モーダル */
         .day-task-list { padding: 0 24px; }
 
         .day-task-item {
@@ -472,7 +538,7 @@
 
         .day-task-footer .btn { width: 100%; padding: 12px; font-size: 15px; }
 
-        /* ===== 通知バナー ===== */
+        /* 通知バナー */
         .notification-banner {
             background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
             color: #333;
@@ -497,12 +563,20 @@
 
             .modal-actions .btn { flex: none; padding: 10px 24px; }
             .day-task-footer .btn { width: auto; }
+
+            .fc .fc-daygrid-day-frame {
+                min-height: 100px !important;
+                max-height: 100px !important;
+            }
+
+            .fc .fc-toolbar-title {
+                font-size: 1.3em !important;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 通知バナー -->
         <div class="notification-banner" id="notificationBanner" onclick="switchScreen('list'); setFilter('pending');"></div>
 
         <div class="header">
@@ -738,7 +812,7 @@
             checkNotifications();
         }
 
-        // ===== 通知チェック（期限1日前） =====
+        // ===== 通知チェック =====
         function checkNotifications() {
             const today = new Date();
             today.setHours(0,0,0,0);
@@ -755,7 +829,6 @@
                 banner.textContent = `🔔 明日が期限: ${names}${extra}（タップで確認）`;
                 banner.classList.add('visible');
 
-                // ブラウザ通知（許可済みなら）
                 if (Notification.permission === 'granted') {
                     const lastNotified = localStorage.getItem('lastNotifyDate');
                     const todayStr = fmt(today);
@@ -952,9 +1025,12 @@
             calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
                 initialView: 'dayGridMonth',
                 locale: 'ja',
-                headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,timeGridWeek,timeGridDay' },
+                headerToolbar: {
+                    left: 'prev',
+                    center: 'title',
+                    right: 'next'
+                },
                 height: '100%',
-                nowIndicator: true,
                 dayCellClassNames: arg => holidaysCache[fmt(arg.date)] ? ['fc-holiday'] : [],
                 dayCellContent: arg => {
                     const hn = holidaysCache[fmt(arg.date)];
@@ -974,10 +1050,8 @@
                     })));
                 },
                 dateClick: info => {
-                    let ds, ts = null;
-                    if (info.view.type === 'dayGridMonth') { ds = info.dateStr; }
-                    else { ds = fmt(info.date); ts = String(info.date.getHours()).padStart(2,'0')+':'+String(info.date.getMinutes()).padStart(2,'0'); }
-                    window._presetTime = ts;
+                    const ds = info.dateStr;
+                    window._presetTime = null;
                     openDayTasksModal(ds);
                 },
                 eventClick: info => openDayTasksModal(fmt(new Date(info.event.start)))
