@@ -37,16 +37,11 @@
 
         .container { width: 100%; max-width: 1200px; background: var(--surface); display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 
-        .header { background: var(--primary); color: white; padding: 14px 20px; flex-shrink: 0; text-align: center; position: relative; }
+        .header { background: var(--primary); color: white; padding: 14px 20px; flex-shrink: 0; text-align: center; }
         .header h1 { font-size: 1.15em; font-weight: 700; }
-        .auth-status { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.7em; opacity: 0.9; cursor: pointer; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.2); }
-        .auth-status:hover { background: rgba(255,255,255,0.3); }
 
         .notification-banner { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333; padding: 10px 20px; text-align: center; font-size: 0.85em; font-weight: 600; flex-shrink: 0; display: none; cursor: pointer; }
         .notification-banner.visible { display: block; }
-        .sync-info-banner { background: var(--primary); color: white; padding: 12px 20px; text-align: center; font-size: 0.85em; font-weight: 600; flex-shrink: 0; display: none; cursor: pointer; align-items: center; justify-content: center; gap: 8px; }
-        .sync-info-banner.visible { display: flex; }
-        .sync-info-banner .close-sync { background: rgba(255,255,255,0.3); border: none; color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
         .screen { display: none; flex: 1; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
         .screen.active { display: flex; flex-direction: column; }
@@ -147,21 +142,6 @@
         .day-task-footer { padding: 12px 20px 20px; }
         .day-task-footer .btn { width: 100%; padding: 12px; font-size: 15px; }
 
-        .auth-tabs { display: flex; margin-bottom: 16px; border-bottom: 2px solid var(--border); }
-        .auth-tab { flex: 1; padding: 10px; background: none; border: none; font-size: 14px; font-weight: 600; color: var(--text-sub); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
-        .auth-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .auth-error { background: #fff5f5; color: var(--danger); padding: 10px; border-radius: 8px; font-size: 0.85em; margin-bottom: 12px; display: none; text-align: center; }
-        .auth-error.visible { display: block; }
-        .auth-success { background: #f0fff4; color: var(--success); padding: 10px; border-radius: 8px; font-size: 0.85em; margin-bottom: 12px; display: none; text-align: center; }
-        .auth-success.visible { display: block; }
-        .auth-note { font-size: 0.75em; color: #adb5bd; text-align: center; margin-top: 12px; }
-
-        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); z-index: 2000; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
-        .loading-overlay.visible { display: flex; }
-        .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { font-size: 0.9em; color: var(--text-sub); font-weight: 600; }
-
         @media (min-width: 769px) {
             .container { border-radius: 20px; margin: 20px; height: calc(100vh - 40px); box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
             .modal-actions .btn { flex: none; padding: 10px 24px; }
@@ -179,14 +159,9 @@
 <body>
     <div class="container">
         <div class="notification-banner" id="notificationBanner" onclick="switchScreen('list'); setFilter('pending');"></div>
-        <div class="sync-info-banner" id="syncInfoBanner">
-            <span>☁️ ログイン中：タスクは全端末で自動同期されます</span>
-            <button class="close-sync" onclick="dismissSyncBanner()">&times;</button>
-        </div>
 
         <div class="header">
             <h1 id="screenTitle">📋 タスク管理</h1>
-            <div class="auth-status" id="authStatusBtn" onclick="openAuthModal()">🔒 未ログイン</div>
         </div>
 
         <div class="screen active" id="homeScreen">
@@ -249,166 +224,54 @@
         </div>
     </div>
 
-    <div class="modal" id="authModal">
-        <div class="modal-content">
-            <div class="modal-header"><span id="authModalTitle">アカウント</span><button class="modal-close-btn" onclick="closeModal('authModal')">&times;</button></div>
-            <div class="modal-body">
-                <div class="auth-tabs">
-                    <button class="auth-tab active" onclick="switchAuthTab('login')">ログイン</button>
-                    <button class="auth-tab" onclick="switchAuthTab('register')">新規登録</button>
-                </div>
-                <div class="auth-error" id="authError"></div>
-                <div class="auth-success" id="authSuccess"></div>
-                <form id="authForm">
-                    <div class="form-group"><label for="authEmail">メールアドレス</label><input type="email" id="authEmail" class="form-control" required placeholder="example@mail.com"></div>
-                    <div class="form-group"><label for="authPassword">パスワード</label><input type="password" id="authPassword" class="form-control" required placeholder="6文字以上" minlength="6"></div>
-                    <div class="modal-actions"><button type="submit" class="btn btn-primary" id="authSubmitBtn">ログイン</button></div>
-                </form>
-                <div class="auth-note" id="authNote">ログインするとタスクが全端末で同期されます</div>
-                <div id="logoutSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);text-align:center;">
-                    <p style="font-size:0.85em;color:var(--text-sub);margin-bottom:10px;" id="loggedInEmail"></p>
-                    <button class="btn btn-danger" onclick="logout()" style="width:100%;">ログアウト</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text" id="loadingText">同期中...</div></div>
-
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/ja.global.min.js'></script>
     <script>
         // =============================================
-        // 🔥 Firebase設定
-        // =============================================
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyDRDhfY9PaYRWlwD8M2-Dpl3vXSDGRPwRY",
-            authDomain: "task-manager-b35c7.firebaseapp.com",
-            projectId: "task-manager-b35c7",
-            storageBucket: "task-manager-b35c7.firebasestorage.app",
-            messagingSenderId: "77578441388",
-            appId: "1:77578441388:web:1c450a13ad435288968509"
-        };
-
-        let firebaseApp = null, auth = null, db = null;
-        let firestoreUnsubscribe = null, currentUser = null, isFirebaseReady = false;
-        try {
-            firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
-            auth = firebase.auth();
-            db = firebase.firestore();
-            isFirebaseReady = true;
-        } catch (e) { console.warn('Firebase初期化失敗:', e); }
-
-        // =============================================
         // アプリ状態
         // =============================================
         let tasks = [], currentFilter = 'all', currentScreen = 'home';
-        let selectedDayDate = null, calendar, currentAuthTab = 'login';
-        let isSyncingFromFirestore = false;
-        let isInitialLoadComplete = false;
+        let selectedDayDate = null, calendar;
         window._presetTime = null;
 
+        // 祝日計算
         function getJapaneseHolidays(year) {
             const h = {};
-            h[`<LaTex>id_23</LaTex>{year}-02-11`] = '建国記念の日'; h[`<LaTex>id_22</LaTex>{year}-03-<LaTex>id_21</LaTex>{year}-04-29`] = '昭和の日'; h[`<LaTex>id_20</LaTex>{year}-05-04`] = 'みどりの日'; h[`<LaTex>id_19</LaTex>{year}-08-11`] = '山の日';
+            h[`${year}-01-01`] = '元日';
+            const d1 = new Date(year, 0, 1); while (d1.getDay() !== 1) d1.setDate(d1.getDate() + 1); d1.setDate(d1.getDate() + 7); h[fmt(d1)] = '成人の日';
+            h[`${year}-02-11`] = '建国記念の日'; h[`${year}-02-23`] = '天皇誕生日';
+            const v = Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4)); h[`${year}-03-${String(v).padStart(2,'0')}`] = '春分の日';
+            h[`${year}-04-29`] = '昭和の日'; h[`${year}-05-03`] = '憲法記念日'; h[`${year}-05-04`] = 'みどりの日'; h[`${year}-05-05`] = 'こどもの日';
+            const d2 = new Date(year, 6, 1); while (d2.getDay() !== 1) d2.setDate(d2.getDate() + 1); d2.setDate(d2.getDate() + 14); h[fmt(d2)] = '海の日';
+            h[`${year}-08-11`] = '山の日';
             const d3 = new Date(year, 8, 1); while (d3.getDay() !== 1) d3.setDate(d3.getDate() + 1); d3.setDate(d3.getDate() + 14); h[fmt(d3)] = '敬老の日';
-            const a = Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4)); h[`<LaTex>id_18</LaTex>{String(a).padStart(2,'0')}`] = '秋分の日';
+            const a = Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4)); h[`${year}-09-${String(a).padStart(2,'0')}`] = '秋分の日';
             const d4 = new Date(year, 9, 1); while (d4.getDay() !== 1) d4.setDate(d4.getDate() + 1); d4.setDate(d4.getDate() + 7); h[fmt(d4)] = 'スポーツの日';
-            h[`<LaTex>id_17</LaTex>{year}-11-23`] = '勤労感謝の日';
+            h[`${year}-11-03`] = '文化の日'; h[`${year}-11-23`] = '勤労感謝の日';
             return h;
         }
         const holidaysCache = {};
         function getAllHolidays() { const y = new Date().getFullYear(); for (let i = y - 1; i <= y + 2; i++) { if (!holidaysCache[i]) Object.assign(holidaysCache, getJapaneseHolidays(i)); } return holidaysCache; }
-        function fmt(d) { return `<LaTex>id_16</LaTex>{String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function fmt(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
         function fmtJP(ds) { if (!ds) return ''; return new Date(ds).toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' }); }
         function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-        // データ永続化
-        function saveTasksLocal() { if (!isSyncingFromFirestore) localStorage.setItem('tasks', JSON.stringify(tasks)); }
-        function loadTasksLocal() { const s = localStorage.getItem('tasks'); if (s) tasks = JSON.parse(s); }
-
-        async function saveTasksToFirestore() {
-            if (!currentUser || !db) return;
-            try {
-                await db.collection('users').doc(currentUser.uid).collection('tasks').doc('data').set({
-                    tasks, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (e) {
-                console.error('Firestore保存エラー:', e);
-            }
-        }
-
-        function startFirestoreListener() {
-            if (!currentUser || !db) return;
-            if (firestoreUnsubscribe) firestoreUnsubscribe();
-
-            firestoreUnsubscribe = db.collection('users').doc(currentUser.uid)
-                .collection('tasks').doc('data')
-                .onSnapshot(doc => {
-                    if (doc.exists && doc.data() && Array.isArray(doc.data().tasks)) {
-                        isSyncingFromFirestore = true;
-                        tasks = doc.data().tasks;
-                        localStorage.setItem('tasks', JSON.stringify(tasks));
-                        renderTasks(); renderHome(); updateStats(); updateCalendar(); checkNotifications();
-                        isSyncingFromFirestore = false;
-                    }
-                    if (!isInitialLoadComplete) {
-                        isInitialLoadComplete = true;
-                        hideLoading();
-                    }
-                }, err => {
-                    console.error('Firestoreリスナーエラー:', err);
-                    if (!isInitialLoadComplete) {
-                        isInitialLoadComplete = true;
-                        hideLoading();
-                    }
-                });
-        }
-
-        function stopFirestoreListener() {
-            if (firestoreUnsubscribe) { firestoreUnsubscribe(); firestoreUnsubscribe = null; }
-        }
-
-        async function migrateLocalToFirestore() {
-            if (!currentUser || !db) return;
-            try {
-                const local = localStorage.getItem('tasks');
-                if (local) {
-                    const parsed = JSON.parse(local);
-                    if (parsed.length > 0) {
-                        const doc = await db.collection('users').doc(currentUser.uid)
-                            .collection('tasks').doc('data').get();
-                        if (!doc.exists) {
-                            tasks = parsed;
-                            await saveTasksToFirestore();
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error('マイグレーションエラー:', e);
-            }
-        }
-
-        function persistTasks() {
-            saveTasksLocal();
-            if (currentUser) saveTasksToFirestore();
-        }
+        // LocalStorage
+        function saveTasks() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+        function loadTasks() { const s = localStorage.getItem('tasks'); if (s) tasks = JSON.parse(s); }
 
         // CRUD
-        function addTask(t) { t.id = Date.now(); t.completed = false; t.createdAt = new Date().toISOString(); tasks.push(t); persistTasks(); refreshAll(); }
-        function updateTask(id, u) { const i = tasks.findIndex(t => t.id === id); if (i !== -1) { tasks[i] = { ...tasks[i], ...u }; persistTasks(); refreshAll(); } }
+        function addTask(t) { t.id = Date.now(); t.completed = false; t.createdAt = new Date().toISOString(); tasks.push(t); saveTasks(); refreshAll(); }
+        function updateTask(id, u) { const i = tasks.findIndex(t => t.id === id); if (i !== -1) { tasks[i] = { ...tasks[i], ...u }; saveTasks(); refreshAll(); } }
         function deleteTask(id) {
             if (confirm('削除しますか？')) {
-                tasks = tasks.filter(t => t.id !== id); persistTasks(); refreshAll();
+                tasks = tasks.filter(t => t.id !== id); saveTasks(); refreshAll();
                 if (selectedDayDate && document.getElementById('dayTasksModal').classList.contains('active')) renderDayTasks(selectedDayDate);
             }
         }
         function toggleTask(id) {
             const t = tasks.find(x => x.id === id);
-            if (t) { t.completed = !t.completed; persistTasks(); refreshAll(); if (selectedDayDate && document.getElementById('dayTasksModal').classList.contains('active')) renderDayTasks(selectedDayDate); }
+            if (t) { t.completed = !t.completed; saveTasks(); refreshAll(); if (selectedDayDate && document.getElementById('dayTasksModal').classList.contains('active')) renderDayTasks(selectedDayDate); }
         }
         function refreshAll() { renderTasks(); renderHome(); updateStats(); updateCalendar(); checkNotifications(); }
 
@@ -420,102 +283,13 @@
             const banner = document.getElementById('notificationBanner');
             if (upcoming.length > 0) {
                 const names = upcoming.map(t => t.title).slice(0, 3).join('、');
-                banner.textContent = `🔔 明日が期限: ${names}<LaTex>id_15</LaTex>{upcoming.length - 3}件` : ''}（タップで確認）`;
+                banner.textContent = `🔔 明日が期限: ${names}${upcoming.length > 3 ? ` 他${upcoming.length - 3}件` : ''}（タップで確認）`;
                 banner.classList.add('visible');
                 if (Notification.permission === 'granted') {
                     const last = localStorage.getItem('lastNotifyDate'); const ts = fmt(today);
                     if (last !== ts) { new Notification('📋 タスク管理', { body: `明日が期限のタスクが${upcoming.length}件あります` }); localStorage.setItem('lastNotifyDate', ts); }
                 }
             } else { banner.classList.remove('visible'); }
-        }
-
-        // 同期バナー
-        function showSyncBannerIfNeeded() {
-            if (!currentUser) return;
-            if (!localStorage.getItem('syncBannerDismissed_' + currentUser.uid))
-                document.getElementById('syncInfoBanner').classList.add('visible');
-        }
-        function dismissSyncBanner() {
-            document.getElementById('syncInfoBanner').classList.remove('visible');
-            if (currentUser) localStorage.setItem('syncBannerDismissed_' + currentUser.uid, 'true');
-        }
-
-        // 認証UI
-        function updateAuthUI() {
-            const btn = document.getElementById('authStatusBtn');
-            if (currentUser) { btn.textContent = '☁️ 同期中'; btn.style.background = 'rgba(40,167,69,0.3)'; }
-            else { btn.textContent = '🔒 未ログイン'; btn.style.background = 'rgba(255,255,255,0.2)'; }
-        }
-
-        function openAuthModal() {
-            if (!isFirebaseReady) { alert('Firebaseの設定が完了していません。'); return; }
-            document.getElementById('authError').classList.remove('visible');
-            document.getElementById('authSuccess').classList.remove('visible');
-            if (currentUser) {
-                document.querySelector('.auth-tabs').style.display = 'none';
-                document.getElementById('authForm').style.display = 'none';
-                document.getElementById('authNote').style.display = 'none';
-                document.getElementById('logoutSection').style.display = 'block';
-                document.getElementById('loggedInEmail').textContent = currentUser.email;
-                document.getElementById('authModalTitle').textContent = 'アカウント';
-            } else {
-                document.querySelector('.auth-tabs').style.display = 'flex';
-                document.getElementById('authForm').style.display = 'block';
-                document.getElementById('authNote').style.display = 'block';
-                document.getElementById('logoutSection').style.display = 'none';
-                switchAuthTab('login');
-            }
-            openModal('authModal');
-        }
-
-        function switchAuthTab(tab) {
-            currentAuthTab = tab;
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.textContent === (tab === 'login' ? 'ログイン' : '新規登録')));
-            document.getElementById('authSubmitBtn').textContent = tab === 'login' ? 'ログイン' : '新規登録';
-            document.getElementById('authModalTitle').textContent = tab === 'login' ? 'ログイン' : '新規登録';
-            document.getElementById('authError').classList.remove('visible');
-            document.getElementById('authSuccess').classList.remove('visible');
-        }
-
-        document.getElementById('authForm').addEventListener('submit', async e => {
-            e.preventDefault(); if (!isFirebaseReady) return;
-            const email = document.getElementById('authEmail').value.trim();
-            const password = document.getElementById('authPassword').value;
-            const errEl = document.getElementById('authError');
-            errEl.classList.remove('visible');
-            showLoading(currentAuthTab === 'login' ? 'ログイン中...' : '登録中...');
-            try {
-                if (currentAuthTab === 'login') await auth.signInWithEmailAndPassword(email, password);
-                else await auth.createUserWithEmailAndPassword(email, password);
-                closeModal('authModal');
-            } catch (err) {
-                const msgs = {
-                    'auth/user-not-found': 'アカウントが見つかりません',
-                    'auth/wrong-password': 'パスワードが正しくありません',
-                    'auth/email-already-in-use': 'このメールは既に登録されています',
-                    'auth/invalid-email': 'メールアドレスの形式が正しくありません',
-                    'auth/weak-password': 'パスワードは6文字以上にしてください',
-                    'auth/invalid-credential': 'メールまたはパスワードが正しくありません'
-                };
-                errEl.textContent = msgs[err.code] || 'エラーが発生しました';
-                errEl.classList.add('visible');
-            } finally { hideLoading(); }
-        });
-
-        async function logout() {
-            if (!auth) return;
-            showLoading('ログアウト中...');
-            try { stopFirestoreListener(); await auth.signOut(); closeModal('authModal'); }
-            catch (e) { console.error(e); }
-            finally { hideLoading(); }
-        }
-
-        function showLoading(text) {
-            document.getElementById('loadingText').textContent = text || '処理中...';
-            document.getElementById('loadingOverlay').classList.add('visible');
-        }
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('visible');
         }
 
         // 画面切替
@@ -554,7 +328,7 @@
             else if (t.dueDate === tmrStr) cls += ' tomorrow';
             const pri = {low:'低',medium:'中',high:'高'}[t.priority];
             const dl = t.dueDate === todayStr ? '今日' : t.dueDate === tmrStr ? '明日' : fmtJP(t.dueDate);
-            return `<div class="<LaTex>id_14</LaTex>{esc(t.title)}</div><div style="font-size:0.75em;color:var(--text-sub);margin-top:2px;"><LaTex>id_13</LaTex>{t.dueTime?' ・ '+t.dueTime:''}</div></div><div class="today-task-info"><span class="priority-badge priority-<LaTex>id_12</LaTex>{pri}</span></div></div>`;
+            return `<div class="${cls}"><div><div class="today-task-title">${esc(t.title)}</div><div style="font-size:0.75em;color:var(--text-sub);margin-top:2px;">${dl}${t.dueTime?' ・ '+t.dueTime:''}</div></div><div class="today-task-info"><span class="priority-badge priority-${t.priority}">${pri}</span></div></div>`;
         }
 
         // リスト
@@ -578,7 +352,8 @@
                     else if (d.getTime() === tmr.getTime()) cls += ' tomorrow';
                 }
                 const pri = {low:'低',medium:'中',high:'高'}[t.priority];
-                const dt = t.dueDate ? fmtJP(t.dueDate) + (t.dueTime ? ` <LaTex>id_11</LaTex>{cls}"><input type="checkbox" class="task-checkbox" <LaTex>id_10</LaTex>{t.id})"><div class="task-content"><div class="task-title"><LaTex>id_9</LaTex>{t.priority}"><LaTex>id_8</LaTex>{dt}</span></div></div><div class="task-actions"><button class="btn btn-secondary" onclick="openEditModal(<LaTex>id_7</LaTex>{t.id})">削除</button></div></div>`;
+                const dt = t.dueDate ? fmtJP(t.dueDate) + (t.dueTime ? ` ${t.dueTime}` : '') : '期限なし';
+                return `<div class="${cls}"><input type="checkbox" class="task-checkbox" ${t.completed?'checked':''} onchange="toggleTask(${t.id})"><div class="task-content"><div class="task-title">${esc(t.title)}</div><div class="task-meta"><span class="priority-badge priority-${t.priority}">${pri}</span><span>📅 ${dt}</span></div></div><div class="task-actions"><button class="btn btn-secondary" onclick="openEditModal(${t.id})">編集</button><button class="btn btn-danger" onclick="deleteTask(${t.id})">削除</button></div></div>`;
             }).join('');
         }
         function updateStats() {
@@ -617,8 +392,65 @@
         }
         function openDayTasksModal(ds) {
             selectedDayDate = ds;
-            document.getElementById('dayTasksTitle').innerHTML = `📅 タスク一覧 <span class="date-badge"><LaTex>id_6</LaTex>{cls}" onclick="openEditModal(<LaTex>id_5</LaTex>{t.completed?'checked':''} onclick="event.stopPropagation();toggleTask(<LaTex>id_4</LaTex>{t.dueTime||'終日'}</div><div class="day-task-title"><LaTex>id_3</LaTex>{t.priority}"><LaTex>id_2</LaTex>{arg.date.getDate()}</span>`;
-                    if (hn) html += `<div class="fc-holiday-name"><LaTex>id_1</LaTex>{t.dueDate}T${t.dueTime}:00` : t.dueDate,
+            document.getElementById('dayTasksTitle').innerHTML = `📅 タスク一覧 <span class="date-badge">${fmtJP(ds)}</span>`;
+            document.getElementById('dayTasksDateLabel').textContent = '';
+            renderDayTasks(ds); openModal('dayTasksModal');
+        }
+        function renderDayTasks(ds) {
+            const items = tasks.filter(t => t.dueDate === ds)
+                .sort((a,b) => { if (a.completed !== b.completed) return a.completed ? 1 : -1; return (a.dueTime||'99:99').localeCompare(b.dueTime||'99:99'); });
+            const el = document.getElementById('dayTasksList');
+            if (!items.length) {
+                el.innerHTML = '<div class="day-task-empty"><div class="empty-icon">📭</div><div>この日のタスクはありません</div><div style="font-size:0.8em;margin-top:4px;color:#adb5bd;">下のボタンから追加できます</div></div>';
+                return;
+            }
+            const todayStr = fmt(new Date());
+            el.innerHTML = items.map(t => {
+                let cls = 'day-task-item';
+                if (t.completed) cls += ' completed';
+                if (!t.completed && t.dueDate < todayStr) cls += ' overdue';
+                return `<div class="${cls}" onclick="openEditModal(${t.id})"><input type="checkbox" class="task-checkbox" ${t.completed?'checked':''} onclick="event.stopPropagation();toggleTask(${t.id})"><div class="day-task-time">${t.dueTime||'終日'}</div><div class="day-task-title">${esc(t.title)}</div><span class="priority-badge priority-${t.priority}">${{low:'低',medium:'中',high:'高'}[t.priority]}</span></div>`;
+            }).join('');
+        }
+        function addTaskForDay() {
+            if (!selectedDayDate) return;
+            const pt = window._presetTime;
+            closeModal('dayTasksModal');
+            openAddModal(selectedDayDate, pt || null);
+            window._presetTime = null;
+        }
+
+        document.getElementById('taskForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('taskId').value;
+            const t = {
+                title: document.getElementById('taskTitle').value.trim(),
+                dueDate: document.getElementById('taskDueDate').value,
+                dueTime: document.getElementById('taskDueTime').value,
+                priority: document.getElementById('taskPriority').value
+            };
+            if (!t.title) return;
+            if (id) updateTask(parseInt(id), t); else addTask(t);
+            closeModal('taskModal');
+        });
+
+        // カレンダー
+        function initCalendar() {
+            getAllHolidays();
+            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+                initialView: 'dayGridMonth', locale: 'ja',
+                headerToolbar: { left: 'prev', center: 'title', right: 'next' }, height: '100%',
+                dayCellClassNames: arg => holidaysCache[fmt(arg.date)] ? ['fc-holiday'] : [],
+                dayCellContent: arg => {
+                    const hn = holidaysCache[fmt(arg.date)];
+                    let html = `<span class="fc-daygrid-day-number">${arg.date.getDate()}</span>`;
+                    if (hn) html += `<div class="fc-holiday-name">${hn}</div>`;
+                    return { html };
+                },
+                events: (info, cb) => {
+                    cb(tasks.filter(t => t.dueDate).map(t => ({
+                        title: t.title,
+                        start: t.dueTime ? `${t.dueDate}T${t.dueTime}:00` : t.dueDate,
                         allDay: !t.dueTime,
                         backgroundColor: t.completed ? '#28a745' : t.priority==='high'?'#dc3545':t.priority==='medium'?'#ffc107':'#4a6fa5',
                         borderColor: t.completed ? '#28a745' : t.priority==='high'?'#dc3545':t.priority==='medium'?'#ffc107':'#4a6fa5',
@@ -633,57 +465,12 @@
         }
         function updateCalendar() { if (calendar) calendar.refetchEvents(); }
 
-        // =============================================
-        // ✅ 初期化処理（タイムアウト・フォールバック対応）
-        // =============================================
+        // 初期化
         document.addEventListener('DOMContentLoaded', () => {
-            loadTasksLocal();
+            loadTasks();
             refreshAll();
             initCalendar();
-
-            if ('Notification' in window && Notification.permission === 'default')
-                Notification.requestPermission();
-
-            if (isFirebaseReady && auth) {
-                auth.onAuthStateChanged(async user => {
-                    currentUser = user;
-                    updateAuthUI();
-
-                    if (user) {
-                        isInitialLoadComplete = false;
-                        showLoading('同期中...');
-
-                        // 5秒タイムアウト：Firestore応答がない場合はローカルデータで続行
-                        const timeoutId = setTimeout(() => {
-                            if (!isInitialLoadComplete) {
-                                console.warn('Firestore同期タイムアウト → ローカルデータで続行');
-                                isInitialLoadComplete = true;
-                                hideLoading();
-                            }
-                        }, 5000);
-
-                        try {
-                            await migrateLocalToFirestore();
-                            startFirestoreListener();
-                            showSyncBannerIfNeeded();
-                        } catch (e) {
-                            console.error('同期エラー:', e);
-                            if (!isInitialLoadComplete) {
-                                isInitialLoadComplete = true;
-                                hideLoading();
-                            }
-                        }
-
-                        // 正常完了時にタイムアウトをクリア
-                        if (isInitialLoadComplete) clearTimeout(timeoutId);
-                    } else {
-                        stopFirestoreListener();
-                        document.getElementById('syncInfoBanner').classList.remove('visible');
-                        loadTasksLocal();
-                        refreshAll();
-                    }
-                });
-            }
+            if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
         });
 
         document.querySelectorAll('.modal').forEach(m => {
@@ -695,3 +482,4 @@
     </script>
 </body>
 </html>
+
